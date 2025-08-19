@@ -1,0 +1,1394 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Amazon Operation Inventory Dashboard - LCY8</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-light: #3b82f6;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --success: #059669;
+      --gray: #6b7280;
+      --light-gray: #e5e7eb;
+      --bg: #f9fafb;
+    }
+    body { 
+      font-family: 'Segoe UI', Arial, sans-serif; 
+      margin: 0; 
+      background: var(--bg); 
+      padding: 20px;
+      color: #1f2937;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    h1 {
+      margin: 0 0 16px;
+      font-size: 24px;
+      font-weight: 600;
+      color: #111827;
+    }
+    .top {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid var(--light-gray);
+      padding: 16px;
+      border-radius: 8px;
+      min-width: 200px;
+      flex: 1;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: var(--gray);
+      font-weight: 500;
+    }
+    .card .val {
+      font-weight: 700;
+      font-size: 24px;
+      color: var(--primary);
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .controls input, .controls select {
+      padding: 8px 12px;
+      border: 1px solid var(--light-gray);
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .controls input:focus, .controls select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid var(--light-gray);
+      text-align: left;
+    }
+    th {
+      font-weight: 600;
+      background: #f9fafb;
+      color: #374151;
+    }
+    tr.low { background: #fff7ed; }
+    tr.out { background: #fef2f2; }
+    .btn {
+      background: var(--primary);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      background: var(--primary-light);
+      transform: translateY(-1px);
+    }
+    .btn:active {
+      transform: translateY(0);
+    }
+    .btn.secondary {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    .btn.danger {
+      background: var(--danger);
+    }
+    .btn.warning {
+      background: var(--warning);
+    }
+    .btn.success {
+      background: var(--success);
+    }
+    .btn.small {
+      font-size: 12px;
+      padding: 6px 10px;
+    }
+    .flex {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .chart-wrap {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    .chart-box {
+      flex: 1;
+      min-width: 300px;
+      background: #fff;
+      border: 1px solid var(--light-gray);
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .highlight {
+      color: var(--danger);
+      font-weight: bold;
+    }
+    .warning {
+      color: var(--warning);
+    }
+    .success-text {
+      color: var(--success);
+    }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .modal.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .modal-content {
+      background: white;
+      padding: 24px;
+      border-radius: 8px;
+      width: 500px;
+      max-width: 90%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      transform: translateY(-20px);
+      transition: transform 0.3s;
+    }
+    .modal.active .modal-content {
+      transform: translateY(0);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--gray);
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--light-gray);
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 24px;
+      justify-content: flex-end;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .status-badge.ok {
+      background: #d1fae5;
+      color: var(--success);
+    }
+    .status-badge.low {
+      background: #fef3c7;
+      color: var(--warning);
+    }
+    .status-badge.out {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+    .budget-meter {
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      margin: 8px 0;
+      overflow: hidden;
+    }
+    .budget-progress {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 4px;
+    }
+    .budget-over {
+      background: var(--danger);
+    }
+    .search-container {
+      position: relative;
+      flex: 1;
+      max-width: 400px;
+    }
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray);
+    }
+    #search {
+      padding-left: 36px;
+      width: 100%;
+    }
+    .table-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .table-actions .btn {
+      padding: 4px 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>
+  Amazon Operation Inventory Dashboard - 
+  <select id="siteSelector" style="font-size:18px;padding:4px 8px;">
+    <option value="LCY8">LCY8</option>
+    <option value="BHX8">BHX8</option>
+    <option value="LBA8">LBA8</option>
+    <option value="LBA9">LBA9</option>
+    <option value="LCY3">LCY3</option>
+    <option value="MAN8">MAN8</option>
+    <option value="SBS2">SBS2</option>
+    <option value="SNG1">SNG1</option>
+    <option value="STN8">STN8</option>
+    <option value="SXW2">SXW2</option>
+  </select>
+</h1>
+    
+    <!-- Summary Cards -->
+    <div class="top">
+      <div class="card">
+        <h3>Total Inventory Value</h3>
+        <div class="val" id="totalValue">£0.00</div>
+      </div>
+      <div class="card">
+        <h3>Total SKUs</h3>
+        <div class="val" id="totalSKUs">0</div>
+      </div>
+      <div class="card">
+        <h3>Items to Reorder</h3>
+        <div class="val" id="toReorder">0</div>
+      </div>
+      <div class="card">
+        <h3>Out of Stock</h3>
+        <div class="val" id="outOfStock">0</div>
+      </div>
+      <div class="card">
+        <h3>Budget Status</h3>
+        <div class="val" id="budgetStatus">£0.00</div>
+        <div class="budget-meter">
+          <div class="budget-progress" id="budgetProgress"></div>
+        </div>
+        <div style="font-size: 12px; color: var(--gray);">
+          <span id="budgetUsed">£0.00</span> of <span id="budgetTotal">£0.00</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Controls -->
+    <div class="flex" style="justify-content:space-between; margin-bottom:20px; flex-wrap: wrap; gap: 16px;">
+      <div class="controls">
+        <div class="search-container">
+          <span class="search-icon">🔍</span>
+          <input id="search" placeholder="Search name / SKU / location" oninput="renderInventory()">
+        </div>
+        <select id="locationFilter" onchange="renderInventory()">
+          <option value="ALL">All locations</option>
+        </select>
+        <select id="statusFilter" onchange="renderInventory()">
+          <option value="ALL">All statuses</option>
+          <option value="OK">OK</option>
+          <option value="LOW">Low stock</option>
+          <option value="OUT">Out of stock</option>
+        </select>
+      </div>
+      <div class="controls">
+        <button class="btn success" onclick="openAddItemModal()">
+          <span>+</span> Add Item
+        </button>
+        <button class="btn secondary" onclick="exportCSV()">Export CSV</button>
+        <button class="btn" onclick="printReport()">Print Report</button>
+        <button class="btn info" style="background:#6366f1;color:#fff;" onclick="openMonthlyReportModal()">Monthly Finance Report</button>
+      </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:600px;">
+        <table id="inventoryTable">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>SKU</th>
+              <th>Location</th>
+              <th>Qty</th>
+              <th>Reorder</th>
+              <th>Unit Cost</th>
+              <th>Value</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+            <!-- Undo Last Order Button -->
+      <div id="undoContainer" style="margin-bottom:16px; display:none;">
+        <button class="btn danger" onclick="undoLastOrder()">Undo Last Order</button>
+        <span id="undoText" style="margin-left:12px; color:#dc2626;"></span>
+      </div>
+    
+    <footer style="margin-top:24px;font-size:12px;color:var(--gray);text-align:center;">
+      Last updated: <span id="lastUpdated"></span> |
+      <button class="btn secondary small" onclick="openSettingsModal()">Settings</button>
+      <br>
+      Contact <b>@stephyyr</b> for support regarding this page
+    </footer>
+  </div>
+          </thead>
+          <tbody id="inventoryBody"></tbody>
+        </table>
+      </div>
+      <div style="width:400px;min-width:300px;">
+        <div class="chart-wrap">
+          <div class="chart-box">
+            <h4 style="margin:0 0 12px">Stock by Location</h4>
+            <canvas id="chartLocation" height="220"></canvas>
+          </div>
+          <div class="chart-box">
+            <h4 style="margin:0 0 12px">Stock Status</h4>
+            <canvas id="chartLow" height="220"></canvas>
+          </div>
+        </div>
+        <div class="chart-box" style="margin-top:16px;">
+          <h4 style="margin:0 0 12px">Top Items by Value</h4>
+          <div id="topItemsList" style="font-size:13px;"></div>
+        </div>
+      </div>
+    </div>
+    
+    
+  
+  <!-- Add Item Modal -->
+  <div class="modal" id="addItemModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Add New Inventory Item</h3>
+        <button class="modal-close" onclick="closeAddItemModal()">&times;</button>
+      </div>
+      <div class="form-group">
+        <label for="addName">Item Name</label>
+        <input type="text" id="addName" class="form-control" placeholder="e.g., Stapler size small">
+      </div>
+      <div class="form-group">
+        <label for="addSKU">SKU</label>
+        <input type="text" id="addSKU" class="form-control" placeholder="e.g., OPS-SP-S">
+      </div>
+      <div class="form-group">
+        <label for="addLocation">Location</label>
+        <select id="addLocation" class="form-control">
+          <option value="Office">Office</option>
+          <option value="Ops Storage">Ops Storage</option>
+          <option value="Site Cage 1">Site Cage 1</option>
+          <option value="Site Cage 2">Site Cage 2</option>
+          <option value="Site Cage 3">Site Cage 3</option>
+          <option value="Site Cage 4">Site Cage 4</option>
+          <option value="Site Cage9 (OPS)">Site Cage9 (OPS)</option>
+          <option value="Site">Site</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="addQty">Quantity</label>
+        <input type="number" id="addQty" class="form-control" value="0">
+      </div>
+      <div class="form-group">
+        <label for="addReorderQty">Reorder Quantity</label>
+        <input type="number" id="addReorderQty" class="form-control" placeholder="Leave empty if not applicable">
+      </div>
+      <div class="form-group">
+        <label for="addCost">Unit Cost (£)</label>
+        <input type="number" step="0.01" id="addCost" class="form-control" value="0.00">
+      </div>
+      <div class="form-group">
+        <label for="addNotes">Notes</label>
+        <textarea id="addNotes" class="form-control" rows="2"></textarea>
+      </div>
+      <div class="action-buttons">
+        <button class="btn secondary" onclick="closeAddItemModal()">Cancel</button>
+        <button class="btn success" onclick="addNewItem()">Add Item</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Edit Item Modal -->
+  <div class="modal" id="editItemModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Inventory Item</h3>
+        <button class="modal-close" onclick="closeEditItemModal()">&times;</button>
+      </div>
+      <input type="hidden" id="editIndex">
+      <div class="form-group">
+        <label for="editName">Item Name</label>
+        <input type="text" id="editName" class="form-control">
+      </div>
+      <div class="form-group">
+        <label for="editSKU">SKU</label>
+        <input type="text" id="editSKU" class="form-control">
+      </div>
+      <div class="form-group">
+        <label for="editLocation">Location</label>
+        <select id="editLocation" class="form-control">
+          <option value="Office">Office</option>
+          <option value="Ops Storage">Ops Storage</option>
+          <option value="Site Cage 1">Site Cage 1</option>
+          <option value="Site Cage 2">Site Cage 2</option>
+          <option value="Site Cage 3">Site Cage 3</option>
+          <option value="Site Cage 4">Site Cage 4</option>
+          <option value="Site Cage9 (OPS)">Site Cage9 (OPS)</option>
+          <option value="Site">Site</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="editQty">Quantity</label>
+        <input type="number" id="editQty" class="form-control">
+      </div>
+      <div class="form-group">
+        <label for="editReorderQty">Reorder Quantity</label>
+        <input type="number" id="editReorderQty" class="form-control">
+      </div>
+      <div class="form-group">
+        <label for="editCost">Unit Cost (£)</label>
+        <input type="number" step="0.01" id="editCost" class="form-control">
+      </div>
+      <div class="form-group">
+        <label for="editNotes">Notes</label>
+        <textarea id="editNotes" class="form-control" rows="2"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="editCoupaURL">Coupa URL</label>
+        <input type="text" id="editCoupaURL" class="form-control">
+      </div>
+      <div class="action-buttons">
+        <button class="btn secondary" onclick="closeEditItemModal()">Cancel</button>
+        <button class="btn danger" onclick="deleteItem()">Delete</button>
+        <button class="btn" onclick="saveItem()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Settings Modal -->
+  <div class="modal" id="settingsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Settings</h3>
+        <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
+      </div>
+      <div class="form-group">
+        <label for="settingsBudget">Monthly Budget (£)</label>
+        <input type="number" id="settingsBudget" class="form-control" value="0">
+      </div>
+      <div class="form-group">
+        <label for="settingsCoupaURL">Coupa Base URL</label>
+        <input type="text" id="settingsCoupaURL" class="form-control" placeholder="https://coupahost.example.com">
+      </div>
+      <div class="form-group">
+        <label for="settingsSlackWebhook">Slack Webhook URL (optional)</label>
+        <input type="text" id="settingsSlackWebhook" class="form-control" placeholder="https://hooks.slack.com/services/...">
+      </div>
+      <div class="action-buttons">
+        <button class="btn secondary" onclick="closeSettingsModal()">Cancel</button>
+        <button class="btn" onclick="saveSettings()">Save Settings</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Purchase Modal -->
+  <div class="modal" id="purchaseModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Purchase Item</h3>
+        <button class="modal-close" onclick="closePurchaseModal()">&times;</button>
+      </div>
+      <input type="hidden" id="purchaseIndex">
+      <div class="form-group">
+        <label>Item</label>
+        <div style="padding:8px;background:#f9fafb;border-radius:4px;" id="purchaseItemName"></div>
+      </div>
+      <div class="form-group">
+        <label>Current Stock</label>
+        <div style="padding:8px;background:#f9fafb;border-radius:4px;" id="purchaseCurrentStock"></div>
+      </div>
+      <div class="form-group">
+        <label for="purchaseQty">Quantity to Order</label>
+        <input type="number" id="purchaseQty" class="form-control" value="1" min="1">
+      </div>
+      <div class="form-group">
+        <label>Estimated Cost</label>
+        <div style="padding:8px;background:#f9fafb;border-radius:4px;" id="purchaseEstimatedCost"></div>
+      </div>
+      <div class="form-group">
+        <label for="purchaseNotes">Order Notes</label>
+        <textarea id="purchaseNotes" class="form-control" rows="2" placeholder="Any special instructions..."></textarea>
+      </div>
+      <div class="action-buttons">
+        <button class="btn secondary" onclick="closePurchaseModal()">Cancel</button>
+        <button class="btn success" onclick="placeOrder('Coupa')">Order via Coupa</button>
+        <button class="btn" style="background:#4A154B;color:#fff;" onclick="placeOrder('Slack')">Order in Slack GC</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly Finance Report Modal -->
+  <div class="modal" id="monthlyReportModal">
+    <div class="modal-content" style="max-width:800px;width:95%;">
+      <div class="modal-header">
+        <h3 class="modal-title">Monthly Finance Report</h3>
+        <button class="modal-close" onclick="closeMonthlyReportModal()">&times;</button>
+      </div>
+      <div id="monthlyReportContent"></div>
+      <div style="margin-top:16px;display:flex;gap:12px;">
+        <button class="btn secondary" onclick="closeMonthlyReportModal()">Close</button>
+        <button class="btn success" onclick="printMonthlyReport()">Print / Save PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+  <script>
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDFa8xetoEIF9oBhYz3oV8SXG257O_IK5A",
+  authDomain: "inventorylcy8.firebaseapp.com",
+  projectId: "inventorylcy8",
+  storageBucket: "inventorylcy8.firebasestorage.app",
+  messagingSenderId: "362284714756",
+  appId: "1:362284714756:web:1cd6b70b23e46cc6c21e51",
+  measurementId: "G-HLW56YTQVK"
+
+};
+firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+    // Inventory data with estimated costs in GBP
+    let inventory = [
+  {"name":"Stapler size small","sku":"OPS-SP-S","location":"Office","qty":20,"reorderQty":10,"cost":5.99,"notes":"","site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Sticky notes","sku":"OPS-STK","location":"Office","qty":35,"reorderQty":10,"cost":3.49,"notes":"","site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home?search_results=true#search=Post-it%20Super%20Sticky%20Notes%2076x76mm&scope_by=&browse_comm=&browse_comm_title="},
+  {"name":"Stapler size big","sku":"OPS-SP-L","location":"Ops Storage","qty":30,"reorderQty":15,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Marker Black","sku":"OPS-MK-BLK","location":"Ops Storage","qty":16,"reorderQty":15,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home?search_results=true#search=Q-Connect%20Drywipe%20Marker%20Pen%20Black%20(Pack%20of%2010)%20KF26035&scope_by=&browse_comm=&browse_comm_title="},
+  {"name":"Marker Blue","sku":"OPS-MK-BLU","location":"Office","qty":0,"reorderQty":10,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Marker Red","sku":"OPS-MK-RED","location":"Office","qty":0,"reorderQty":10,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Ball-pen","sku":"OPS-BP-BLK","location":"Office","qty":24,"reorderQty":15,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home?search_results=true#search=3159399&scope_by=&browse_comm=&browse_comm_title"},
+  {"name":"Notebook small","sku":"OPS-NB-S","location":"Office","qty":10,"reorderQty":20,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Notebook big","sku":"OPS-NB-L","location":"Office","qty":0,"reorderQty":10,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Printer","sku":"OPS-PRT","location":"Office","qty":2,"reorderQty":2,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Clips","sku":"OPS-CLP","location":"Ops Storage","qty":2,"reorderQty":2,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Staples small","sku":"OPS-STP-S","location":"Office","qty":10,"reorderQty":20,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"A3 Printing Paper","sku":"OPS-PP-A3","location":"Ops Storage","qty":7,"reorderQty":10,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"A3 Laminating  Pouch","sku":"OPS-LP-A3","location":"Ops Storage","qty":50,"reorderQty":50,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Laserjet 651A Magrenta","sku":"OPS-LJ-MAG","location":"Ops Storage","qty":2,"reorderQty":3,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Laserjet CE342AC Yellow","sku":"OPS-LJ-YEL","location":"Ops Storage","qty":1,"reorderQty":3,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Laserjet CE341AC Blue","sku":"OPS-LJ-BLU","location":"Ops Storage","qty":1,"reorderQty":3,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Laserjet 203x","sku":"OPS-LJ-B203","location":"Ops Storage","qty":12,"reorderQty":10,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Ventilator","sku":"OPS-VT","location":"Ops Storage","qty":5,"reorderQty":5,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Envolopes","sku":"OPS-EV","location":"Ops Storage","qty":6,"reorderQty":5,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Correction Tape","sku":"OPS-CT","location":"Ops Storage","qty":7,"reorderQty":5,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"A4 Laminating Pouch","sku":"OPS-LP-A4","location":"Office","qty":7,"reorderQty":10,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Pen","sku":"OPS-PEN-BLK","location":"Office","qty":0,"reorderQty":15,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Hole Puncher","sku":"OPS-HP","location":"Office","qty":1,"reorderQty":10,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Hand sanitiser","sku":"OPS-HS","location":"Office","qty":50,"reorderQty":50,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Peg","sku":"OPS-PEG","location":"Office","qty":50,"reorderQty":50,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Putaway Sticky Label","sku":"ST2-PSL","location":"Site Cage 2","qty":1,"reorderQty":1,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Plastic cups","sku":"ST-PC","location":"Site Cage 1","qty":40,"reorderQty":30,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/items/5468461/detail"},
+  {"name":"SB5-PF Platform Scale","sku":"ST-PS","location":"Site Cage 2","qty":1,"reorderQty":2,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Laserjet CF226XC Black","sku":"ST-LJ-BLK","location":"Site Cage 2","qty":13,"reorderQty":10,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Laserjet CF325X Black","sku":"ST-LJ-325X","location":"Site Cage 2","qty":1,"reorderQty":0,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"A4 Printing Paper","sku":"ST-A4-PAP","location":"Site Cage 3","qty":43,"reorderQty":40,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/requisition_headers/16754825"},
+  {"name":"A4 Copier Paper","sku":"ST-A4-COP-PAP","location":"Site Cage 3","qty":48,"reorderQty":40,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Ergotron Wall Mount","sku":"ST-ERGO-WM","location":"Site Cage 3","qty":26,"reorderQty":30,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Danger/Overpack  Label","sku":"ST-D/O-LBL","location":"Site Cage 4","qty":32,"reorderQty":25,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Ball-Pen","sku":"ST-BP-BLK","location":"Site Cage 4","qty":7,"reorderQty":10,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Label UN103","sku":"ST-LBL-UN103","location":"Site Cage9 (OPS)","qty":2,"reorderQty":2,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"MC33 Rubber boot for gun","sku":"ST-MC33-RUB-GUN-BOOT","location":"Site Cage9 (OPS)","qty":8,"reorderQty":10,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Laserjet CE343AC Magneta","sku":"ST-LJ-MAG","location":"Site Cage9 (OPS)","qty":1,"reorderQty":1,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Laserjet CE340AC","sku":"ST-LJ-BLK","location":"Site Cage9 (OPS)","qty":1,"reorderQty":1,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Wall Pocket","sku":"ST-WP","location":"Site Cage9 (OPS)","qty":6,"reorderQty":20,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Magnetic file","sku":"ST-MF","location":"Site Cage9 (OPS)","qty":8,"reorderQty":10,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"White Tape","sku":"ST-WHITE-TP","location":"Site Cage9 (OPS)","qty":2,"reorderQty":2,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"A4 Sticky Pouch","sku":"ST-A4-SP","location":"Site Cage9 (OPS)","qty":15,"reorderQty":10,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"A3 Sticky Pouch","sku":"ST-A3-SP","location":"Site Cage9 (OPS)","qty":8,"reorderQty":10,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Single-side Tape","sku":"ST-SINGLE-TP","location":"Site Cage9 (OPS)","qty":9,"reorderQty":5,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Red Tape","sku":"ST-RED-TP","location":"Site Cage9 (OPS)","qty":5,"reorderQty":10,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/items/7762739/detail"},
+  {"name":"Yellow Tape","sku":"ST-YLW-TP","location":"Site Cage9 (OPS)","qty":10,"reorderQty":20,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/items/7762803/detail"},
+  {"name":"Blue Tape","sku":"ST-BLU-TP","location":"Site Cage9 (OPS)","qty":8,"reorderQty":10,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/items/7762766/detail"},
+  {"name":"Orange Tape Small","sku":"ST-ORG-TP-S","location":"Site Cage9 (OPS)","qty":31,"reorderQty":20,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/items/7762837/detail"},
+  {"name":"Orange Black Stripe Tape","sku":"ST-ORG-BLK-STRIPE-TP","location":"Site Cage9 (OPS)","qty":11,"reorderQty":10,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/requisition_headers/19894441"},
+  {"name":"White Red Stripe Tape","sku":"ST-WT-RED-STRIPE-TP","location":"Site Cage9 (OPS)","qty":5,"reorderQty":8,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/items/7764503/detail"},
+  {"name":"Green Tape Small","sku":"ST-GRN-TP-S","location":"Site Cage9 (OPS)","qty":1,"reorderQty":10,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/items/7762784/detail"},
+  {"name":"Floor Sticker","sku":"ST-FLR-STK","location":"Site Cage9 (OPS)","qty":10,"reorderQty":10,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/items/15662641/detail"},
+  {"name":"Scrapes","sku":"ST-SCRAPES","location":"Site Cage9 (OPS)","qty":7,"reorderQty":10,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/order_headers/17167985"},
+  {"name":"Shoulder Strap","sku":"ST-SHLDR-STRAP","location":"Site Cage9 (OPS)","qty":16,"reorderQty":20,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/user/home"},
+  {"name":"Small Jam Poles","sku":"ST-JP-S","location":"Site","qty":7,"reorderQty":15,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/requisition_headers/16583186"},
+  {"name":"Large Jam Poles","sku":"ST-JP-L","location":"Site","qty":16,"reorderQty":20,"site":"LCY8","coupaURL":"https://amazon.coupahost.com/items/16439169/detail"}
+];
+    //
+    // App settings
+    let settings = {
+      budget: 5000,
+      coupaURL: "",
+      slackWebhook: "https://amazon.enterprise.slack.com/archives/C08NPN45UA3",
+      lastUpdated: new Date().toLocaleString()
+    };
+
+    // Chart references
+    let chartLocation = null;
+    let chartLow = null;
+
+    // Order history
+    let orderHistory = [];
+
+    // Initialize the app
+    async function init() {
+  // Load settings from localStorage if available
+  const savedSettings = localStorage.getItem('inventorySettings');
+  if (savedSettings) {
+    settings = JSON.parse(savedSettings);
+  }
+
+  // Load inventory from Firestore
+  db.collection('inventory').onSnapshot(snapshot => {
+    inventory = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    updateLocationFilter(); // <-- Add this line
+    renderInventory();
+    createCharts();
+    renderTopItems();
+    updateSummaryStats();
+  });
+
+  // Update UI with settings
+  document.getElementById('settingsBudget').value = settings.budget;
+  document.getElementById('settingsCoupaURL').value = settings.coupaURL;
+  document.getElementById('settingsSlackWebhook').value = settings.slackWebhook;
+  document.getElementById('lastUpdated').textContent = settings.lastUpdated;
+
+  // Initialize location filter dropdown
+  // (You may want to move this inside the Firestore callback above)
+}
+
+    // Format money as GBP
+    function formatMoney(v) {
+      return '£' + v.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    }
+
+    // Update summary statistics
+    function updateSummaryStats() {
+      // Calculate total inventory value
+      const totalValue = inventory.reduce((sum, item) => sum + (item.qty * (item.cost || 0)), 0);
+      document.getElementById('totalValue').textContent = formatMoney(totalValue);
+      
+      // Count total SKUs
+      document.getElementById('totalSKUs').textContent = inventory.length;
+      
+      // Count items to reorder (low stock)
+      const toReorder = inventory.filter(item => 
+        item.reorderQty !== null && item.qty <= item.reorderQty && item.qty > 0
+      ).length;
+      document.getElementById('toReorder').textContent = toReorder;
+      
+      // Count out of stock items
+      const outOfStock = inventory.filter(item => item.qty === 0).length;
+      document.getElementById('outOfStock').textContent = outOfStock;
+      
+      // Update budget information
+      const budgetUsed = totalValue;
+      const budgetPercentage = settings.budget > 0 ? Math.min(100, (budgetUsed / settings.budget) * 100) : 0;
+      
+      document.getElementById('budgetStatus').textContent = formatMoney(settings.budget - budgetUsed);
+      document.getElementById('budgetUsed').textContent = formatMoney(budgetUsed);
+      document.getElementById('budgetTotal').textContent = formatMoney(settings.budget);
+      
+      const progressBar = document.getElementById('budgetProgress');
+      progressBar.style.width = `${budgetPercentage}%`;
+      
+      if (budgetPercentage > 90) {
+        progressBar.classList.add('budget-over');
+        document.getElementById('budgetStatus').classList.add('highlight');
+      } else {
+        progressBar.classList.remove('budget-over');
+        document.getElementById('budgetStatus').classList.remove('highlight');
+      }
+    }
+
+    // Render inventory table
+    function renderInventory() {
+      const searchTerm = document.getElementById('search').value.toLowerCase();
+      const locationFilter = document.getElementById('locationFilter').value;
+      const statusFilter = document.getElementById('statusFilter').value;
+      const siteFilter = document.getElementById('siteSelector').value;
+
+      const filtered = inventory.filter(item => {
+        // Site filter
+        const matchesSite = item.site === siteFilter;
+
+        // Search filter
+        const matchesSearch =
+          item.name.toLowerCase().includes(searchTerm) ||
+          item.sku.toLowerCase().includes(searchTerm) ||
+          item.location.toLowerCase().includes(searchTerm);
+
+        // Location filter
+        const matchesLocation = locationFilter === 'ALL' || item.location === locationFilter;
+
+        // Status filter
+        let matchesStatus = true;
+        if (statusFilter !== 'ALL') {
+          if (statusFilter === 'OK') {
+            matchesStatus = item.qty > 0 && (item.reorderQty === null || item.qty > item.reorderQty);
+          } else if (statusFilter === 'LOW') {
+            matchesStatus = item.qty > 0 && item.reorderQty !== null && item.qty <= item.reorderQty;
+          } else if (statusFilter === 'OUT') {
+            matchesStatus = item.qty === 0;
+          }
+        }
+
+        return matchesSite && matchesSearch && matchesLocation && matchesStatus;
+      });
+
+      const body = document.getElementById('inventoryBody');
+      body.innerHTML = '';
+      
+      filtered.forEach((item, index) => {
+        const value = item.qty * (item.cost || 0);
+        const needsReorder = (item.reorderQty !== null) ? (item.qty <= item.reorderQty) : false;
+        const tr = document.createElement('tr');
+        
+        // Apply row styling based on status
+        if (item.qty === 0) {
+          tr.classList.add('out');
+        } else if (needsReorder) {
+          tr.classList.add('low');
+        }
+        
+        // Determine status badge
+        let statusBadge = '';
+        if (item.qty === 0) {
+          statusBadge = '<span class="status-badge out">Out of Stock</span>';
+        } else if (needsReorder) {
+          statusBadge = '<span class="status-badge low">Low Stock</span>';
+        } else {
+          statusBadge = '<span class="status-badge ok">In Stock</span>';
+        }
+        
+        tr.innerHTML = `
+          <td>${item.name}</td>
+          <td>${item.sku}</td>
+          <td>${item.location}</td>
+          <td>${item.qty}</td>
+          <td>${item.reorderQty !== null ? item.reorderQty : 'N/A'}</td>
+          <td>${item.cost ? formatMoney(item.cost) : 'N/A'}</td>
+          <td>${formatMoney(value)}</td>
+          <td>${statusBadge}</td>
+          <td class="table-actions">
+            <button class="btn small" onclick="openEditModal('${item.id}')">Edit</button>
+            <button 
+  class="btn small" 
+  style="${item.qty === 0 ? 'background:#dc2626;color:#fff;font-weight:600;' : 'background:#f3f4f6;color:#374151;'}" 
+  onclick="openPurchaseModal('${item.id}')">
+  ${item.qty === 0 ? 'Order now!' : 'Reorder'}
+</button>
+          </td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    // Create charts
+    function createCharts() {
+      // Group by location
+      const locationGroups = {};
+      inventory.forEach(item => {
+        if (!locationGroups[item.location]) {
+          locationGroups[item.location] = 0;
+        }
+        locationGroups[item.location] += item.qty;
+      });
+      
+      // Stock status counts
+      let okCount = 0, lowCount = 0, outCount = 0;
+      inventory.forEach(item => {
+        if (item.qty === 0) {
+          outCount++;
+        } else if (item.reorderQty !== null && item.qty <= item.reorderQty) {
+          lowCount++;
+        } else {
+          okCount++;
+        }
+      });
+      
+      // Location chart
+      const ctx1 = document.getElementById('chartLocation').getContext('2d');
+      if (chartLocation) chartLocation.destroy();
+      chartLocation = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(locationGroups),
+          datasets: [{
+            label: 'Quantity',
+            data: Object.values(locationGroups),
+            backgroundColor: '#3b82f6',
+            borderColor: '#2563eb',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `Quantity: ${context.raw}`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: { 
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Quantity'
+              }
+            }
+          }
+        }
+      });
+      
+      // Low/Out stock chart
+      const ctx2 = document.getElementById('chartLow').getContext('2d');
+      if (chartLow) chartLow.destroy();
+      chartLow = new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+          labels: ['In Stock', 'Low Stock', 'Out of Stock'],
+          datasets: [{
+            data: [okCount, lowCount, outCount],
+            backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { 
+              position: 'bottom',
+              labels: {
+                boxWidth: 12,
+                padding: 20
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `${context.label}: ${context.raw} items`;
+                }
+              }
+            }
+          },
+          cutout: '70%'
+        }
+      });
+    }
+
+    // Render top items by value
+    function renderTopItems() {
+      // Sort by value (quantity * cost)
+      const sorted = [...inventory].sort((a, b) => (b.qty * b.cost) - (a.qty * a.cost));
+      const topItems = sorted.slice(0, 5);
+      
+      const container = document.getElementById('topItemsList');
+      container.innerHTML = '';
+      
+      topItems.forEach(item => {
+        const value = item.qty * item.cost;
+        const div = document.createElement('div');
+        div.style.padding = '8px 0';
+        div.style.borderBottom = '1px solid #f3f4f6';
+        div.style.display = 'flex';
+        div.style.justifyContent = 'space-between';
+        
+        div.innerHTML = `
+          <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%;">
+            ${item.name}
+          </div>
+          <div style="font-weight: 500;">
+            ${formatMoney(value)}
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // Modal functions
+    function openAddItemModal() {
+      document.getElementById('addItemModal').classList.add('active');
+    }
+
+    function closeAddItemModal() {
+      document.getElementById('addItemModal').classList.remove('active');
+    }
+
+    function openEditModal(index) {
+      const item = inventory[index];
+      document.getElementById('editIndex').value = index;
+      document.getElementById('editName').value = item.name;
+      document.getElementById('editSKU').value = item.sku;
+      document.getElementById('editLocation').value = item.location;
+      document.getElementById('editQty').value = item.qty;
+      document.getElementById('editReorderQty').value = item.reorderQty || '';
+      document.getElementById('editCost').value = item.cost || '';
+      document.getElementById('editNotes').value = item.notes || '';
+      document.getElementById('editCoupaURL').value = item.coupaURL || '';
+      document.getElementById('editItemModal').classList.add('active');
+    }
+
+    function closeEditItemModal() {
+      document.getElementById('editItemModal').classList.remove('active');
+    }
+
+    function openPurchaseModal(id) {
+      const item = inventory.find(i => i.id === id);
+      document.getElementById('purchaseIndex').value = id;
+      document.getElementById('purchaseItemName').textContent = item.name;
+      document.getElementById('purchaseCurrentStock').textContent = `${item.qty} ${item.reorderQty !== null ? `(reorder at ${item.reorderQty})` : ''}`;
+      document.getElementById('purchaseQty').value = item.reorderQty !== null ? Math.max(1, item.reorderQty - item.qty + 1) : 1;
+      updatePurchaseEstimate();
+      document.getElementById('purchaseModal').classList.add('active');
+    }
+
+    function closePurchaseModal() {
+      document.getElementById('purchaseModal').classList.remove('active');
+    }
+
+    function openSettingsModal() {
+      document.getElementById('settingsModal').classList.add('active');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.remove('active');
+    }
+
+    function openMonthlyReportModal() {
+      document.getElementById('monthlyReportModal').classList.add('active');
+      generateMonthlyReport();
+    }
+
+    function closeMonthlyReportModal() {
+      document.getElementById('monthlyReportModal').classList.remove('active');
+    }
+
+    function updatePurchaseEstimate() {
+      const id = document.getElementById('purchaseIndex').value;
+      const qty = parseInt(document.getElementById('purchaseQty').value) || 0;
+      const item = inventory.find(i => i.id === id);
+      const cost = qty * item.cost;
+      document.getElementById('purchaseEstimatedCost').textContent = formatMoney(cost);
+    }
+
+    // Inventory CRUD operations
+    async function addNewItem() {
+      const name = document.getElementById('addName').value.trim();
+      const sku = document.getElementById('addSKU').value.trim();
+      const location = document.getElementById('addLocation').value;
+      const qty = parseInt(document.getElementById('addQty').value) || 0;
+      const reorderQty = document.getElementById('addReorderQty').value ? parseInt(document.getElementById('addReorderQty').value) : null;
+      const cost = parseFloat(document.getElementById('addCost').value) || 0;
+      const notes = document.getElementById('addNotes').value.trim();
+
+      if (!name || !sku) {
+        alert('Please enter both name and SKU');
+        return;
+      }
+
+      const newItem = {
+        name,
+        sku,
+        location,
+        qty,
+        reorderQty,
+        cost,
+        notes
+      };
+
+      await db.collection('inventory').add(newItem);
+      closeAddItemModal();
+      // No need to call renderInventory etc, Firestore listener will update UI
+      // Reset form fields...
+    }
+
+    async function saveItem() {
+      const index = document.getElementById('editIndex').value;
+      const item = inventory[index];
+      const name = document.getElementById('editName').value.trim();
+      const sku = document.getElementById('editSKU').value.trim();
+      const location = document.getElementById('editLocation').value;
+      const qty = parseInt(document.getElementById('editQty').value) || 0;
+      const reorderQty = document.getElementById('editReorderQty').value ? parseInt(document.getElementById('editReorderQty').value) : null;
+      const cost = parseFloat(document.getElementById('editCost').value) || 0;
+      const notes = document.getElementById('editNotes').value.trim();
+      const coupaURL = document.getElementById('editCoupaURL').value.trim();
+
+      if (!name || !sku) {
+        alert('Please enter both name and SKU');
+        return;
+      }
+
+      const updatedItem = {
+        ...item,
+        name,
+        sku,
+        location,
+        qty,
+        reorderQty,
+        cost,
+        notes,
+        coupaURL
+      };
+
+      await db.collection('inventory').doc(item.id).set(updatedItem);
+      closeEditItemModal();
+    }
+
+    async function deleteItem() {
+      if (!confirm('Are you sure you want to delete this item?')) return;
+      const index = document.getElementById('editIndex').value;
+      const item = inventory[index];
+      await db.collection('inventory').doc(item.id).delete();
+      closeEditItemModal();
+    }
+
+    // Order placement functions
+    async function placeOrder(method) {
+  const id = document.getElementById('purchaseIndex').value;
+  const qty = parseInt(document.getElementById('purchaseQty').value) || 0;
+  const notes = document.getElementById('purchaseNotes').value.trim();
+  const item = inventory.find(i => i.id === id);
+
+  if (qty <= 0) {
+    alert('Please enter a valid quantity');
+    return;
+  }
+
+  // Log order to history (this can also be stored in Firestore if you want)
+  const order = {
+    date: new Date().toISOString(),
+    name: item.name,
+    sku: item.sku,
+    qty,
+    cost: item.cost,
+    total: qty * (item.cost || 0),
+    method,
+    index: parseInt(index)
+  };
+  orderHistory.push(order);
+
+  lastOrderUndo = {
+    order,
+    prevQty: item.qty
+  };
+
+  // Redirect to item's Coupa URL
+  if (method === 'Coupa') {
+    if (item.coupaURL) {
+      window.open(item.coupaURL, '_blank');
+    } else {
+      alert('No Coupa URL set for this item.');
+    }
+  } else if (method === 'Slack') {
+    if (!settings.slackWebhook) {
+      alert('Slack webhook is not configured in settings');
+      return;
+    }
+    window.open(settings.slackWebhook, '_blank');
+  }
+
+  // Update inventory in Firestore
+  await db.collection('inventory').doc(item.id).update({
+    qty: item.qty + qty
+  });
+
+  closePurchaseModal();
+  // UI will update via Firestore listener
+  showUndoButton(order);
+}
+
+    // Settings functions
+    function saveSettings() {
+      settings.budget = parseFloat(document.getElementById('settingsBudget').value) || 0;
+      settings.coupaURL = document.getElementById('settingsCoupaURL').value.trim();
+      settings.slackWebhook = document.getElementById('settingsSlackWebhook').value.trim();
+      settings.lastUpdated = new Date().toLocaleString();
+      
+      localStorage.setItem('inventorySettings', JSON.stringify(settings));
+      document.getElementById('lastUpdated').textContent = settings.lastUpdated;
+      
+      closeSettingsModal();
+      updateSummaryStats();
+    }
+
+    // Save inventory to localStorage
+    function saveInventory() {
+      settings.lastUpdated = new Date().toLocaleString();
+      localStorage.setItem('inventoryData', JSON.stringify(inventory));
+      localStorage.setItem('inventorySettings', JSON.stringify(settings));
+      document.getElementById('lastUpdated').textContent = settings.lastUpdated;
+    }
+
+    // Save a single item (add or update)
+async function saveItemToDB(item) {
+  if (item.id) {
+    await db.collection('inventory').doc(item.id).set(item);
+  } else {
+    await db.collection('inventory').add(item);
+  }
+  loadInventory();
+}
+
+// Export functions
+    function exportCSV() {
+      let csv = 'Name,SKU,Location,Quantity,Reorder Qty,Unit Cost,Value,Status\n';
+      
+      inventory.forEach(item => {
+        const value = item.qty * (item.cost || 0);
+        let status = '';
+        
+        if (item.qty === 0) {
+          status = 'Out of Stock';
+        } else if (item.reorderQty !== null && item.qty <= item.reorderQty) {
+          status = 'Low Stock';
+        } else {
+          status = 'In Stock';
+        }
+        
+        csv += `"${item.name}","${item.sku}","${item.location}",${item.qty},${item.reorderQty || ''},${item.cost || ''},${value},"${status}"\n`;
+      });
+      
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `inventory_export_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function printReport() {
+      window.print();
+    }
+
+    function printMonthlyReport() {
+      const printContents = document.getElementById('monthlyReportContent').innerHTML;
+      const win = window.open('', '', 'width=900,height=700');
+      win.document.write(`
+        <html>
+          <head>
+            <title>Monthly Finance Report</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+              h1 { font-size: 24px; margin-bottom: 16px; }
+              h2 { font-size: 20px; margin: 12px 0; }
+              p { font-size: 14px; line-height: 1.6; }
+              table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+              th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+              th { background: #f4f4f4; }
+              .total { font-weight: bold; }
+            </style>
+          </head>
+          <body>
+            <h1>Monthly Finance Report</h1>
+            <div id="reportContent"></div>
+          </body>
+        </html>
+      `);
+      const reportWin = win.document.getElementById('reportContent');
+      
+      // Generate report content
+      const now = new Date();
+      const month = now.getMonth();
+      const year = now.getFullYear();
+
+      // Filter orders for this month
+      const monthlyOrders = orderHistory.filter(o => {
+        const d = new Date(o.date);
+        return d.getMonth() === month && d.getFullYear() === year;
+      });
+
+      const totalSpend = monthlyOrders.reduce((sum, o) => sum + o.total, 0);
+      const topItems = {};
+      monthlyOrders.forEach(o => {
+        if (!topItems[o.sku]) topItems[o.sku] = { name: o.name, qty: 0, total: 0 };
+        topItems[o.sku].qty += o.qty;
+        topItems[o.sku].total += o.total;
+      });
+
+      let reportHTML = `<h2>Summary</h2>`;
+      reportHTML += `<p>Total Spend: ${formatMoney(totalSpend)}</p>`;
+      reportHTML += `<p>Budget: ${formatMoney(settings.budget)}</p>`;
+      reportHTML += `<p>Budget Remaining: ${formatMoney(settings.budget - totalSpend)}</p>`;
+      reportHTML += `<h2>Top Items Ordered</h2><table><tr><th>Item</th><th>Quantity</th><th>Total Cost</th></tr>`;
+      Object.values(topItems)
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 5)
+        .forEach(item => {
+          reportHTML += `<tr><td>${item.name}</td><td>${item.qty}</td><td>${formatMoney(item.total)}</td></tr>`;
+        });
+      reportHTML += `</table>`;
+
+      reportWin.innerHTML = reportHTML;
+      win.document.close();
+      win.focus();
+      win.print();
+      win.close();
+    }
+
+    function generateMonthlyReport() {
+      const now = new Date();
+      const month = now.getMonth();
+      const year = now.getFullYear();
+
+      // Filter orders for this month
+      const monthlyOrders = orderHistory.filter(o => {
+        const d = new Date(o.date);
+        return d.getMonth() === month && d.getFullYear() === year;
+      });
+
+      const totalSpend = monthlyOrders.reduce((sum, o) => sum + o.total, 0);
+      const topItems = {};
+      monthlyOrders.forEach(o => {
+        if (!topItems[o.sku]) topItems[o.sku] = { name: o.name, qty: 0, total: 0 };
+        topItems[o.sku].qty += o.qty;
+        topItems[o.sku].total += o.total;
+      });
+
+      let reportHTML = `<h2>Summary</h2>`;
+      reportHTML += `<p>Total Spend: ${formatMoney(totalSpend)}</p>`;
+      reportHTML += `<p>Budget: ${formatMoney(settings.budget)}</p>`;
+      reportHTML += `<p>Budget Remaining: ${formatMoney(settings.budget - totalSpend)}</p>`;
+      reportHTML += `<h2>Top Items Ordered</h2><table><tr><th>Item</th><th>Quantity</th><th>Total Cost</th></tr>`;
+      Object.values(topItems)
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 5)
+        .forEach(item => {
+          reportHTML += `<tr><td>${item.name}</td><td>${item.qty}</td><td>${formatMoney(item.total)}</td></tr>`;
+        });
+      reportHTML += `</table>`;
+
+      document.getElementById('monthlyReportContent').innerHTML = reportHTML;
+    }
+
+    function showUndoButton(order) {
+  document.getElementById('undoText').textContent = `Order for ${order.qty} x ${order.name} via ${order.method} can be undone.`;
+  document.getElementById('undoContainer').style.display = 'block';
+}
+
+function undoLastOrder() {
+  if (!lastOrderUndo) return;
+  // Remove last order from history
+  orderHistory.pop();
+  // Restore previous quantity
+  inventory[lastOrderUndo.order.index].qty = lastOrderUndo.prevQty;
+  saveInventory();
+  renderInventory();
+  createCharts();
+  renderTopItems();
+  updateSummaryStats();
+  document.getElementById('undoContainer').style.display = 'none';
+  lastOrderUndo = null;
+}
+
+// Add this function to bulk upload your hardcoded inventory to Firestore if Firestore is empty
+async function seedFirestoreIfEmpty() {
+  const snapshot = await db.collection('inventory').get();
+  if (snapshot.empty) {
+    for (const item of inventory) {
+      await db.collection('inventory').add(item);
+    }
+    alert('Initial inventory uploaded to Firestore!');
+  }
+}
+
+// Initialize the app when loaded
+document.addEventListener('DOMContentLoaded', async () => {
+  await seedFirestoreIfEmpty();
+  init();
+});
+    
+    // Event listeners for dynamic elements
+    document.getElementById('purchaseQty').addEventListener('input', updatePurchaseEstimate);
+document.getElementById('siteSelector').addEventListener('change', renderInventory);
+  </script>
+</body>
+</html>
